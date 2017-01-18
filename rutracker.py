@@ -3,21 +3,22 @@
 import cookielib
 
 from urllib import urlencode, quote, unquote
-from urllib2 import build_opener, HTTPCookieProcessor, URLError, HTTPError
+from urllib2 import build_opener, HTTPCookieProcessor, URLError, HTTPError, ProxyHandler
 
 from HTMLParser import HTMLParser
 
 import os
 import re
 import logging
-from config import credentials
+from config import credentials, PROXY, PROXY_PORT
 
 cache_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'cache')
 
 
 def cat_movies(t_cat_name):
     tcn_lower = t_cat_name.lower()
-    return u'фильмы' in tcn_lower or u'кино' in tcn_lower and u'dvd' not in tcn_lower and u'blu-ray' not in tcn_lower and u'bluray' not in tcn_lower
+    return u'фильмы' in tcn_lower or u'кино' in tcn_lower and u'dvd' not in tcn_lower and u'blu-ray' not in tcn_lower \
+                                     and u'bluray' not in tcn_lower
 
 
 def get_torrentfilename_by_id(tid):
@@ -28,11 +29,11 @@ def id_by_dl_link(url):
     return re.search(r'dl\.php\?t=(\d+)', url).group(1)
 
 
-def dict_encode(dict, encoding='cp1251'):
+def dict_encode(dictionary, encoding='cp1251'):
     """Encode dict values to encoding (default: cp1251)."""
     encoded_dict = {}
-    for key in dict:
-        encoded_dict[key] = dict[key].encode(encoding)
+    for key in dictionary:
+        encoded_dict[key] = dictionary[key].encode(encoding)
     return encoded_dict
 
 
@@ -43,12 +44,18 @@ class rutracker(object):
     login_url = 'https://rutracker.org/forum/login.php'
     download_url = 'https://rutracker.org/forum/dl.php'
     search_url = 'https://rutracker.org/forum/tracker.php'
+    proxy = None
 
     def __init__(self):
         """Initialize rutracker search engine, signing in using given credentials."""
         # Initialize cookie handler.
         self.cj = cookielib.CookieJar()
-        self.opener = build_opener(HTTPCookieProcessor(self.cj))
+        if PROXY is not None and PROXY_PORT is not None:
+            self.proxy = ProxyHandler({'https': "{}:{}".format(PROXY, PROXY_PORT)})
+        if self.proxy is None:
+            self.opener = build_opener(HTTPCookieProcessor(self.cj))
+        else:
+            self.opener = build_opener(self.proxy, HTTPCookieProcessor(self.cj))
         self.credentials = credentials
         # Add submit button additional POST param.
         self.credentials['login'] = u'Вход'
@@ -62,7 +69,7 @@ class rutracker(object):
                                 "HTTP request to {} failed with status: {}".format(self.login_url, response.getcode()),
                                 response.info(), None)
             # Check if login was successful using cookies.
-            if not 'bb_data' in [cookie.name for cookie in self.cj]:
+            if 'bb_session' not in [cookie.name for cookie in self.cj]:
                 raise ValueError("Unable to connect using given credentials.")
             else:
                 logging.info("Login successful.")
@@ -76,12 +83,12 @@ class rutracker(object):
             os.makedirs(to_dir)
 
         # Set up fake POST params, needed to trick the server into sending the file.
-        id = id_by_dl_link(url)
+        torrent_id = id_by_dl_link(url)
 
-        tf_path = os.path.join(to_dir, get_torrentfilename_by_id(id))
+        tf_path = os.path.join(to_dir, get_torrentfilename_by_id(torrent_id))
         tf = open(tf_path, 'wb')
 
-        post_params = {'t': id, }
+        post_params = {'t': torrent_id, }
         # Download torrent file at url.
         try:
             response = self.opener.open(url, urlencode(dict_encode(post_params)).encode())
@@ -106,13 +113,6 @@ class rutracker(object):
 
     class Parser(HTMLParser):
         """Implement a simple HTML parser to parse results pages."""
-        current_item_default = {'cat': None,
-                                'name': None,
-                                'link': None,
-                                'size': None,
-                                'seeds': None,
-                                'leech': None,
-                                'desc_link': None, }
 
         def __init__(self, download_url, first_page=True):
             """Initialize the parser with url and tell him if he's on the first page of results or not."""
@@ -125,11 +125,13 @@ class rutracker(object):
             self.cat_re = re.compile(r'tracker\.php\?f=\d+')
             self.name_re = re.compile(r'viewtopic\.php\?t=\d+')
             self.pages_re = re.compile(r'tracker\.php\?.*?start=(\d+)')
-            self.current_item = self.current_item_default
+            self.current_item = None
+            self.reset_current()
 
         def reset_current(self):
             """Reset current_item (i.e. torrent) to default values."""
-            self.current_item = self.current_item_default
+            self.current_item = {'cat': None, 'name': None, 'link': None, 'size': None,
+                                 'seeds': None, 'leech': None, 'desc_link': None}
 
         def close(self):
             """Override default close() method just to define additional processing."""
@@ -141,12 +143,13 @@ class rutracker(object):
         def handle_data(self, data):
             """Retrieve inner text information based on rules defined in do_tag()."""
             for key in self.current_item:
-                if self.current_item[key] == True:
+                if self.current_item[key]:
                     self.current_item[key] = data
                     logging.debug((self.tr_counter, key, data))
 
         def handle_starttag(self, tag, attrs):
             """Pass along tag and attributes to dedicated handlers. Discard any tag without handler."""
+            # noinspection PyBroadException
             try:
                 getattr(self, 'do_{}'.format(tag))(attrs)
             except:
@@ -160,7 +163,7 @@ class rutracker(object):
                     # Of course we won't store current_item on first <tr class="tCenter"> seen.
                     if self.tr_counter != 0:
                         # We only store current_item if torrent is still alive.
-                        if self.current_item['seeds'] != None:
+                        if self.current_item['seeds'] is not None:
                             self.results.append(self.current_item)
                         else:
                             self.tr_counter -= 1  # We decrement by one to keep a good value.
@@ -171,7 +174,8 @@ class rutracker(object):
                 pass
 
         def do_a(self, attr):
-            """<a> tags can specify torrent link in "href" or category or name in inner text. Also used to retrieve further results pages."""
+            """<a> tags can specify torrent link in "href" or category or name in inner text.
+            Also used to retrieve further results pages."""
             params = dict(attr)
             try:
                 if self.cat_re.search(params['href']):
@@ -203,7 +207,7 @@ class rutracker(object):
 
         def do_u(self, attr):
             """<u> tags give us torrent size in inner text."""
-            if self.current_item['size'] == False:
+            if not self.current_item['size']:
                 self.current_item['size'] = True
 
         def do_b(self, attr):
@@ -269,9 +273,9 @@ class rutracker(object):
         for start in pages:
             logging.info("Parsing page {}.".format(int(start) / 50 + 1))
             results = self.parse_search(what, start, False)
-            if results != None:
+            if results is not None:
                 (counter, _, cur_search_results) = results
-                search_results = search_results + cur_search_results
+                search_results += cur_search_results
                 total += counter
 
         logging.info("{} torrents found.".format(total))

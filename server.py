@@ -10,7 +10,7 @@ import rutracker
 import json
 import math
 from imdb import IMDb
-from config import HOST_NAME, PORT_NUMBER
+from config import HOST_NAME, PORT_NUMBER, PUBLIC_HOST_NAME
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -39,7 +39,7 @@ class SearchResult(object):
         self.imdb_id = imdb_id if imdb_id.startswith('tt') else 'tt' + imdb_id
 
         self.id = rutracker.id_by_dl_link(self.link)
-        self.down_link = 'http://{}:{}/?tid={}'.format('leugenea.io.bysh.me', PORT_NUMBER, self.id)
+        self.down_link = 'http://{}:{}/?tid={}'.format(PUBLIC_HOST_NAME or HOST_NAME, PORT_NUMBER, self.id)
 
     def to_cp_dict(self):
         if 'bdrip' in self.name.lower() and (
@@ -109,7 +109,7 @@ class RuTrackerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_GET(self):
         query = urlparse.urlparse(self.path).query
         query_components = urlparse.parse_qs(query)
-        print(query_components)
+
         if 'tid' in query_components:
             tid = query_components['tid'][0]
             logging.info('Got query for torrent {}'.format(tid))
