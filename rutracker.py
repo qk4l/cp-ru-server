@@ -17,8 +17,8 @@ cache_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'cache')
 
 def cat_movies(t_cat_name):
     tcn_lower = t_cat_name.lower()
-    return u'фильмы' in tcn_lower or u'кино' in tcn_lower and u'dvd' not in tcn_lower and u'blu-ray' not in tcn_lower \
-                                     and u'bluray' not in tcn_lower
+    return (u'фильмы' in tcn_lower or u'кино' in tcn_lower or u'аниме' in tcn_lower) and u'dvd' not in tcn_lower \
+                                     and u'blu-ray' not in tcn_lower and u'bluray' not in tcn_lower
 
 
 def get_torrentfilename_by_id(tid):
