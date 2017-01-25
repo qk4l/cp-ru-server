@@ -143,7 +143,7 @@ class rutracker(object):
         def handle_data(self, data):
             """Retrieve inner text information based on rules defined in do_tag()."""
             for key in self.current_item:
-                if self.current_item[key]:
+                if self.current_item[key] is True:
                     self.current_item[key] = data
                     logging.debug((self.tr_counter, key, data))
 
