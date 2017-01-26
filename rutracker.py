@@ -21,6 +21,7 @@ def cat_movies(t_cat_name):
            and u'blu-ray' not in tcn_lower and u'bluray' not in tcn_lower \
            and u'psp' not in tcn_lower and u'iphone' not in tcn_lower
 
+
 def get_torrentfilename_by_id(tid):
     return '[rutracker.org].t{}.torrent'.format(tid)
 
@@ -131,7 +132,8 @@ class rutracker(object):
         def reset_current(self):
             """Reset current_item (i.e. torrent) to default values."""
             self.current_item = {'cat': None, 'name': None, 'link': None, 'size': None,
-                                 'seeds': None, 'leech': None, 'desc_link': None}
+                                 'seeds': None, 'leech': None, 'desc_link': None,
+                                 'publish_date': None}
 
         def close(self):
             """Override default close() method just to define additional processing."""
@@ -209,6 +211,8 @@ class rutracker(object):
             """<u> tags give us torrent size in inner text."""
             if not self.current_item['size']:
                 self.current_item['size'] = True
+            if self.current_item['leech']:
+                self.current_item['publish_date'] = True
 
         def do_b(self, attr):
             """<b class="seedmed"> give us number of seeders in inner text."""

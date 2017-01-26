@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import datetime
 import re
 import time
 import BaseHTTPServer
@@ -36,6 +37,7 @@ class SearchResult(object):
         self.name = search_dict['name']
         self.seeds = search_dict['seeds']
         self.size = search_dict['size']
+        self.publish_date = search_dict['publish_date']
         self.imdb_id = imdb_id if imdb_id.startswith('tt') else 'tt' + imdb_id
 
         self.id = rutracker.id_by_dl_link(self.link)
@@ -60,6 +62,8 @@ class SearchResult(object):
             'leechers': int(self.leech),
             'seeders': int(self.seeds),
         }
+        if self.publish_date:
+            res['publish_date'] = datetime.datetime.fromtimestamp(int(self.publish_date)).strftime('%Y-%m-%dT%H:%M:%SZ')
         return res
 
 
