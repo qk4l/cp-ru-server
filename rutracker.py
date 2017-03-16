@@ -10,7 +10,6 @@ from HTMLParser import HTMLParser
 import os
 import re
 import logging
-from config import credentials, PROXY, PROXY_PORT
 
 cache_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'cache')
 
@@ -47,9 +46,15 @@ class rutracker(object):
     search_url = 'https://rutracker.org/forum/tracker.php'
     proxy = None
 
-    def __init__(self):
+    def __init__(self, config):
         """Initialize rutracker search engine, signing in using given credentials."""
         # Initialize cookie handler.
+        PROXY_PORT = config['PROXY_PORT']
+        PROXY = config['PROXY']
+        self.credentials = {
+            'login_username': config['credentials']['login_username'],
+            'login_password': config['credentials']['login_password']
+        }
         self.cj = cookielib.CookieJar()
         if PROXY is not None and PROXY_PORT is not None:
             self.proxy = ProxyHandler({'https': "{}:{}".format(PROXY, PROXY_PORT)})
@@ -57,7 +62,6 @@ class rutracker(object):
             self.opener = build_opener(HTTPCookieProcessor(self.cj))
         else:
             self.opener = build_opener(self.proxy, HTTPCookieProcessor(self.cj))
-        self.credentials = credentials
         # Add submit button additional POST param.
         self.credentials['login'] = u'Вход'
         # Send POST information and sign in.

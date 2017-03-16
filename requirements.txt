@@ -1,1 +1,2 @@
 IMDbPy>=5
+yaml

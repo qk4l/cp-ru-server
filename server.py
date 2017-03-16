@@ -9,15 +9,26 @@ import urlparse
 import os
 import rutracker
 import json
+import yaml
 import math
 from imdb import IMDb
-from config import HOST_NAME, PORT_NUMBER, PUBLIC_HOST_NAME
+
+CONFIG_FILE = '/config/config.yml'
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-rutracker_engine = rutracker.rutracker()
 imdb_engine = IMDb()
+
+
+def read_config(config_f):
+    """
+    Read config file
+    @param config_f: strung
+    @return: dict of data
+    """
+    config = yaml.load(open(config_f, "r"))
+    return config
 
 
 class SearchRequest(object):
@@ -173,6 +184,12 @@ class RuTrackerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 if __name__ == '__main__':
     server_class = BaseHTTPServer.HTTPServer
+    config = read_config(CONFIG_FILE)
+    HOST_NAME = config['HOST_NAME']
+    PORT_NUMBER = config['PORT_NUMBER']
+    PUBLIC_HOST_NAME = config['PUBLIC_HOST_NAME']
+    
+    rutracker_engine = rutracker.rutracker(config)
     httpd = server_class((HOST_NAME, PORT_NUMBER), RuTrackerHandler)
     print time.asctime(), "Server Starts - %s:%s" % (HOST_NAME, PORT_NUMBER)
     try:
