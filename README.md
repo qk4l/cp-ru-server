@@ -2,18 +2,14 @@
 
 This is server for providing search API for [CouchPotato](https://couchpota.to/) for some russian trackers like [RuTracker](https://rutracker.org/).
 
-# Installation
-## Python and PIP installation
-All you need is Python 2.7 and PIP, you can grab one [here](https://www.python.org/downloads/release/python-2712/).
-## Dependencies installation
-To install dependencies, cd to repository's directory and run:
-```sh
-pip install -r requirements.txt
+# Installation/Running
+Copy file `config_example.yml` to `/etc/cp-config.yml` and fill it with your login/password for RuTracker as well as host and port you want.
+
+then run a docker container
+```
+docker run -p 127.0.0.1:9090:9090 -v /etc/cp-config.yml:/config/config.yml qk4l/cp-ru-server
 ```
 
-# Running
-Copy file `config_example.py` to `config.py` and edit in config.py you login/password for RuTracker as well as host and port you want.
-By default, server will listen on `0.0.0.0:9000`.
 ## Note
 Your CouchPotato server **MUST** have access to your PC with this server to send search requests.
 Also you should check if RuTracker is available from your network.

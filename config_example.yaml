@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*-
+---
+HOST_NAME: '0.0.0.0'
+PORT_NUMBER: 9090
+PUBLIC_HOST_NAME:
 
-HOST_NAME = "0.0.0.0"
-PUBLIC_HOST_NAME = None
-PORT_NUMBER = 9000
-
-PROXY = None
-PROXY_PORT = None
+PROXY:
+PROXY_PORT:
 
 credentials:
-    'login_username': 'yourlogin'
-    'login_password': 'yourpassword'
+    'login_username': 'your_login'
+    'login_password': 'your_password'
+
