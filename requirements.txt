@@ -1,2 +1,2 @@
 IMDbPy>=5
-yaml
+PyYAML==3.11
