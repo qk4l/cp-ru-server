@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import cookielib
+import http.cookiejar
+from urllib.parse import urlencode, quote, unquote
+from urllib.request import build_opener, HTTPCookieProcessor, ProxyHandler
+from urllib.error import URLError, HTTPError
 
-from urllib import urlencode, quote, unquote
-from urllib2 import build_opener, HTTPCookieProcessor, URLError, HTTPError, ProxyHandler
-
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 
 import os
 import re
@@ -16,9 +16,9 @@ cache_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'cache')
 
 def cat_movies(t_cat_name):
     tcn_lower = t_cat_name.lower()
-    return (u'фильмы' in tcn_lower or u'кино' in tcn_lower or u'аниме' in tcn_lower) and u'dvd' not in tcn_lower \
-           and u'blu-ray' not in tcn_lower and u'bluray' not in tcn_lower \
-           and u'psp' not in tcn_lower and u'iphone' not in tcn_lower
+    return ('фильмы' in tcn_lower or 'кино' in tcn_lower or 'аниме' in tcn_lower) and 'dvd' not in tcn_lower \
+           and 'blu-ray' not in tcn_lower and 'bluray' not in tcn_lower \
+           and 'psp' not in tcn_lower and 'iphone' not in tcn_lower
 
 
 def get_torrentfilename_by_id(tid):
@@ -55,7 +55,7 @@ class rutracker(object):
             'login_username': config['credentials']['login_username'],
             'login_password': config['credentials']['login_password']
         }
-        self.cj = cookielib.CookieJar()
+        self.cj = http.cookiejar.CookieJar()
         if PROXY is not None and PROXY_PORT is not None:
             self.proxy = ProxyHandler({'https': "{}:{}".format(PROXY, PROXY_PORT)})
         if self.proxy is None:
@@ -63,7 +63,7 @@ class rutracker(object):
         else:
             self.opener = build_opener(self.proxy, HTTPCookieProcessor(self.cj))
         # Add submit button additional POST param.
-        self.credentials['login'] = u'Вход'
+        self.credentials['login'] = 'Вход'
         # Send POST information and sign in.
         try:
             logging.info("Trying to connect using given credentials.")
@@ -229,7 +229,7 @@ class rutracker(object):
 
     def parse_search(self, what, start=0, first_page=True):
         """Search for what starting on specified page. Defaults to first page of results."""
-        logging.debug(u"parse_search({}, {}, {})".format(what, start, first_page))
+        logging.debug("parse_search({}, {}, {})".format(what, start, first_page))
         # Search.
         parser = self.Parser(self.download_url, first_page)
         try:
@@ -265,7 +265,7 @@ class rutracker(object):
         """Search for what on the search engine."""
         # Search on first page.
         what = unquote(what)
-        logging.info(u"Searching for {}...".format(what))
+        logging.info("Searching for {}...".format(what))
         logging.info("Parsing page 1.")
         results = self.parse_search(what)
 

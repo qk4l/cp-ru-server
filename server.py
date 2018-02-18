@@ -4,8 +4,8 @@ import logging
 import datetime
 import re
 import time
-import BaseHTTPServer
-import urlparse
+import http.server
+import urllib.parse
 import os
 import rutracker
 import json
@@ -87,14 +87,14 @@ def imdb_to_search_request(imdb_id):
     if imdb_id.startswith('tt'):
         imdb_id = imdb_id[2:]
     movie = imdb_engine.get_movie(imdb_id)
-    search = u'{} {}'.format(remove_short_words(movie['title']), movie['year'])
+    search = '{} {}'.format(remove_short_words(movie['title']), movie['year'])
     return [SearchRequest(search, imdb_id, movie['year'])]
 
 
 def search_to_search_requests(search_unquoted):
     imdb_results = imdb_engine.search_movie(search_unquoted)
     res = [
-        SearchRequest(u'{} {}'.format(remove_short_words(movie['title']), movie['year']), movie.getID(), movie['year'])
+        SearchRequest('{} {}'.format(remove_short_words(movie['title']), movie['year']), movie.getID(), movie['year'])
         for movie in imdb_results]
     return res
 
@@ -119,10 +119,10 @@ def search_results_to_json(search_results):
     return json.dumps(result_dict)
 
 
-class RuTrackerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+class RuTrackerHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
-        query = urlparse.urlparse(self.path).query
-        query_components = urlparse.parse_qs(query)
+        query = urllib.parse.urlparse(self.path).query
+        query_components = urllib.parse.parse_qs(query)
 
         if 'tid' in query_components:
             tid = query_components['tid'][0]
@@ -182,7 +182,7 @@ class RuTrackerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    server_class = BaseHTTPServer.HTTPServer
+    server_class = http.server.HTTPServer
     config = read_config(CONFIG_FILE)
     HOST_NAME = config['HOST_NAME']
     PORT_NUMBER = config['PORT_NUMBER']
