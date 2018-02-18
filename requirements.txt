@@ -1,2 +1,2 @@
-IMDbPy>=5
+IMDbPy>=6.2
 PyYAML==3.11

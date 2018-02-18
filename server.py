@@ -27,8 +27,7 @@ def read_config(config_f):
     @param config_f: strung
     @return: dict of data
     """
-    config = yaml.load(open(config_f, "r"))
-    return config
+    return yaml.safe_load(open(config_f, "r"))
 
 
 class SearchRequest(object):
@@ -188,13 +187,13 @@ if __name__ == '__main__':
     HOST_NAME = config['HOST_NAME']
     PORT_NUMBER = config['PORT_NUMBER']
     PUBLIC_HOST_NAME = config['PUBLIC_HOST_NAME']
-    
+
     rutracker_engine = rutracker.rutracker(config)
     httpd = server_class((HOST_NAME, PORT_NUMBER), RuTrackerHandler)
-    print time.asctime(), "Server Starts - %s:%s" % (HOST_NAME, PORT_NUMBER)
+    print(time.asctime(), "Server Starts - %s:%s" % (HOST_NAME, PORT_NUMBER))
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
         pass
     httpd.server_close()
-    print time.asctime(), "Server Stops - %s:%s" % (HOST_NAME, PORT_NUMBER)
+    print(time.asctime(), "Server Stops - %s:%s" % (HOST_NAME, PORT_NUMBER))
