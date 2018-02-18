@@ -1,7 +1,7 @@
-FROM python:2.7
+FROM python:3.5
 MAINTAINER Artem Alexandrov
 
-ENV REFRESHED 2017031601
+ENV REFRESHED 2018021801
 
 RUN cd /opt && \
         git clone https://github.com/qk4l/cp-ru-server && \
