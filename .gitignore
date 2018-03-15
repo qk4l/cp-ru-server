@@ -1,4 +1,4 @@
 .idea/
 cache/
-config.py
+config.yml
 *.pyc

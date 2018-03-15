@@ -10,6 +10,8 @@ then run a docker container
 docker run -p 127.0.0.1:9090:9090 -v /etc/cp-config.yml:/config/config.yml qk4l/cp-ru-server
 ```
 
+You can specify `CP_CONFIG_FILE` env to change config file path.
+
 ## Note
 Your CouchPotato server **MUST** have access to your PC with this server to send search requests.
 Also you should check if RuTracker is available from your network.

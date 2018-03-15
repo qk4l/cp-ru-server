@@ -13,7 +13,10 @@ import yaml
 import math
 from imdb import IMDb
 
-CONFIG_FILE = '/config/config.yml'
+if os.getenv('CP_CONFIG_FILE'):
+    CONFIG_FILE = os.getenv('CP_CONFIG_FILE')
+else:
+    CONFIG_FILE = '/config/config.yml'
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -132,17 +135,12 @@ class RuTrackerHandler(http.server.BaseHTTPRequestHandler):
             if not os.path.exists(tf_path):
                 logging.info('Getting torrent file')
                 rutracker_engine.download_torrent_by_id(query_components['tid'][0])
-            tf = open(tf_path)
             self.send_response(200)
-            time.sleep(0.5)
             self.send_header('Content-type', mimetype)
-            time.sleep(0.5)
             self.end_headers()
-            time.sleep(0.5)
-            self.wfile.write(tf.read())
-            time.sleep(0.5)
+            with open(tf_path, 'rb') as tf:
+                self.wfile.write(tf.read())
             logging.info('Torrent file sent')
-            tf.close()
         elif 'imdbid' in query_components or 'search' in query_components:
             if 'imdbid' in query_components:
                 logging.info('Requesting info for IMDb id {}'.format(query_components['imdbid'][0]))
@@ -159,25 +157,18 @@ class RuTrackerHandler(http.server.BaseHTTPRequestHandler):
             search_results = search_requests_to_search_results(search_requests)
             logging.info('Got {} results'.format(len(search_results)))
 
-            ret_json = search_results_to_json(search_results)
+            ret_json = search_results_to_json(search_results).encode()
             self.send_response(200)
-            time.sleep(0.5)
             self.send_header("Content-type", "application/json")
-            time.sleep(0.5)
             self.end_headers()
-            time.sleep(0.5)
             self.wfile.write(ret_json)
-            time.sleep(0.5)
             logging.info('Search results sent')
         else:
             logging.info('Unknown query')
             ret_json = json.dumps({'error': 'Unknown query: {}'.format(query)})
             self.send_response(200)
-            time.sleep(0.5)
             self.send_header("Content-type", "application/json")
-            time.sleep(0.5)
             self.end_headers()
-            time.sleep(0.5)
             self.wfile.write(ret_json)
 
 
